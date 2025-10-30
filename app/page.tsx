@@ -1108,6 +1108,24 @@ export default function Game() {
       window.removeEventListener("resize", resize)
       canvas.removeEventListener("touchstart", handleRestart)
     }
+// MUSIC STOPS WHEN APP IS IN BACKGROUND
+  useEffect(() => {
+    if (!audioContext.current) return
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        audioContext.current?.suspend()
+      } else {
+        audioContext.current?.resume()
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [])
   }, [gameScreen, generateLevel, playSoundEffect, initAudio])
 
   if (gameScreen === "menu") {
