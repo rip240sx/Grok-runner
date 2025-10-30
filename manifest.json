@@ -1,0 +1,18 @@
+{
+  "name": "Grok Runner",
+  "short_name": "GrokRunner",
+  "description": "Help Grok run, jump, and collect chips in this animated adventure!",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#00ff00",
+  "orientation": "landscape-primary",
+  "icons": [
+    {
+      "src": "/grok-cute.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ]
+}
