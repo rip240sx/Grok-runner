@@ -9,9 +9,9 @@
   "orientation": "landscape-primary",
   "icons": [
   {
-    "src": "/grok-cute.jpg",
+    "src": "/Grok-cute512.png",
     "sizes": "512x512",
-    "type": "image/jpeg",
+    "type": "image/png",
     "purpose": "maskable any"
   },
   {
