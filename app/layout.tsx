@@ -49,17 +49,19 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <head>
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-      </head>
-      <body className={`font-sans antialiased`} style={{ margin: 0, padding: 0, overflow: "hidden" }}>
-        {children}
-        <Analytics />
-      </body>
-    </html>
+    <html lang="en" className="h-full w-full">
+  <head>
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  </head>
+  <body className="h-full w-full bg-black font-sans antialiased">
+    <div className="h-full w-full game-container">
+      {children}
+    </div>
+    <Analytics />
+  </body>
+</html>
   )
 }
