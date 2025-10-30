@@ -2,34 +2,73 @@
 @tailwind components;
 @tailwind utilities;
 
-/* UNIVERSAL FULLSCREEN FOR ALL PHONES */
+/* FULLSCREEN CANVAS — NO BARS, NO CUT-OFF */
 html, body, #__next, .game-container {
-  height: 100%;
-  width: 100%;
+  height: 100vh !important;
+  width: 100vw !important;
   margin: 0;
   padding: 0;
   overflow: hidden;
   touch-action: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background: #000;
 }
 
 canvas {
   width: 100vw !important;
   height: 100vh !important;
+  display: block;
   object-fit: contain;
   image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
 }
 
-/* Force landscape on mobile */
-@media (max-width: 768px) {
+/* FORCE LANDSCAPE ON MOBILE */
+@media (orientation: portrait) {
   .landscape-only {
-    transform: rotate(90deg);
-    transform-origin: center;
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100vh;
     height: 100vw;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    margin-left: -50vw;
-    margin-top: -50vh;
+    transform: rotate(90deg);
+    transform-origin: center;
+    overflow: hidden;
   }
+
+  .rotate-hint {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.95);
+    color: #00ff41;
+    font-family: monospace;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 9999;
+    padding: 20px;
+  }
+}
+
+@media (orientation: landscape) {
+  .rotate-hint {
+    display: none;
+  }
+}
+
+/* HIDE SCROLLBARS */
+*::-webkit-scrollbar {
+  display: none;
+}
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
