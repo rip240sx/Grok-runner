@@ -8,11 +8,11 @@
   "theme_color": "#00ff00",
   "orientation": "landscape-primary",
   "icons": [
-    {
-      "src": "/grok-cute.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable any"
-    }
+  {
+    "src": "/grok-cute.jpg",
+    "sizes": "512x512",
+    "type": "image/jpeg",
+    "purpose": "maskable any"
+  }
   ]
 }
