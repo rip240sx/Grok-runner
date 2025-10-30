@@ -1148,18 +1148,23 @@ export default function Game() {
   }
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        position: "relative",
-        width: "100vw",
-        height: "100vh",
-        overflow: "hidden",
-        background: "#0b1114",
-        touchAction: "none",
-        userSelect: "none",
-      }}
-    >
+  <div
+    ref={containerRef}
+    className="game-container"
+    style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100vw",
+      height: "100vh",
+      overflow: "hidden",
+      background: "#0b1114",
+      touchAction: "none",
+      userSelect: "none",
+      margin: 0,
+      padding: 0,
+    }}
+  >
       {!isLandscape && (
         <div
           style={{
