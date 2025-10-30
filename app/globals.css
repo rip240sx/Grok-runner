@@ -2,26 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-rgb: 255, 255, 255;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-rgb: 0, 0, 0;
-  }
-}
-
-body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
+/* UNIVERSAL FULLSCREEN FOR ALL PHONES */
+html, body, #__next, .game-container {
+  height: 100%;
+  width: 100%;
   margin: 0;
   padding: 0;
-  font-family: system-ui, sans-serif;
+  overflow: hidden;
+  touch-action: none;
 }
 
-* {
-  box-sizing: border-box;
+canvas {
+  width: 100vw !important;
+  height: 100vh !important;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+/* Force landscape on mobile */
+@media (max-width: 768px) {
+  .landscape-only {
+    transform: rotate(90deg);
+    transform-origin: center;
+    width: 100vh;
+    height: 100vw;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-left: -50vw;
+    margin-top: -50vh;
+  }
 }
