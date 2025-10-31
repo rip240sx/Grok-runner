@@ -67,14 +67,14 @@ export default function Game() {
   const retryGame = useCallback(() => { startGame(); }, [startGame]);
   const quitToMenu = useCallback(() => { setGameScreen("menu"); }, []);
 
-  // === GAME LOOP + RESIZE + DRAWING ===
+  // === GAME LOOP — ONLY RUN IN BROWSER ===
   useEffect(() => {
-    if (gameScreen !== "playing" || !canvasRef.current) return;
+    if (typeof window === "undefined" || gameScreen !== "playing" || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d")!;
     
-    // FORCE CANVAS SIZE
+    // RESIZE CANVAS
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -99,7 +99,7 @@ export default function Game() {
       player.current.x += player.current.vx * delta;
       player.current.y += player.current.vy * delta;
 
-      // Simple ground collision
+      // Ground collision
       const ground = platforms.current[0];
       if (player.current.y + player.current.h > ground.y && 
           player.current.x + player.current.w > ground.x && 
@@ -112,7 +112,7 @@ export default function Game() {
       // Camera
       camera.current.x = player.current.x - canvas.width / 2;
 
-      // === DRAW EVERYTHING ===
+      // === DRAW ===
       ctx.fillStyle = "#000";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -154,7 +154,7 @@ export default function Game() {
 
   return (
     <MobileLandscapeGuard startButtonLabel="Play">
-      <div className="full-viewport" style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden" }}>
+      <div style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden" }}>
         <canvas 
           ref={canvasRef} 
           style={{ 
@@ -174,7 +174,7 @@ export default function Game() {
   );
 }
 
-// === SCREENS ===
+// === SCREENS (unchanged) ===
 function MenuScreen({ onStart, onHowToPlay }: { onStart: () => void; onHowToPlay: () => void }) {
   return (
     <div style={{ width: "100vw", height: "100vh", background: "linear-gradient(135deg, #0a1a1a 0%, #1a3a2a 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 40 }}>
@@ -205,4 +205,4 @@ function GameOverScreen({ score, level, onRetry, onQuit }: { score: number; leve
       <button onClick={onQuit} style={{ padding: "18px 45px", fontSize: 24, background: "transparent", color: "#FF3366", border: "3px solid #FF3366", borderRadius: 15 }}>QUIT</button>
     </div>
   );
-        }
+}
