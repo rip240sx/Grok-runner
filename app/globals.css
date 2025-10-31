@@ -3,12 +3,11 @@
 @tailwind components;
 @tailwind utilities;
 
-/* --vh trick for mobile address bar */
+/* --vh trick */
 :root {
   --vh: 1vh;
 }
 
-/* Full viewport — no scroll, no overflow */
 html, body, #__next {
   height: 100%;
   margin: 0;
@@ -20,7 +19,23 @@ html, body, #__next {
   overflow: hidden;
 }
 
-/* Fullscreen wrapper */
+/* FORCE CANVAS VISIBLE */
+.game-canvas {
+  width: 100vw !important;
+  height: calc(var(--vh) * 100) !important;
+  object-fit: contain !important;
+  display: block !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  z-index: 1 !important;
+  touch-action: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  background: red !important;  // ← TEMP DEBUG: RED BACKGROUND
+}
+
+/* FULLSCREEN WRAPPER */
 .full-viewport {
   width: 100vw;
   height: calc(var(--vh) * 100);
@@ -32,20 +47,9 @@ html, body, #__next {
   position: relative;
 }
 
-/* Game canvas — fits perfectly */
-.game-canvas {
-  width: 100vw;
-  height: calc(var(--vh) * 100);
-  object-fit: contain;
-  display: block;
-  touch-action: none;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-/* Landscape overlay */
+/* LANDSCAPE OVERLAY */
 .orientation-overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
   display: flex;
   align-items: center;
@@ -57,23 +61,6 @@ html, body, #__next {
   padding: 24px;
   gap: 12px;
   pointer-events: auto;
-}
-
-.orientation-overlay .hint {
-  font-size: 1.05rem;
-  line-height: 1.2;
-  max-width: 92%;
-}
-
-.orientation-overlay .rotate-graphic {
-  width: 64px;
-  height: 64px;
-  border: 2px solid #fff;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transform: rotate(90deg);
 }
 
 .hide-when-overlay {
