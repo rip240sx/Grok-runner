@@ -7,6 +7,9 @@ import "./globals.css";
 const geist = Geist({ subsets: ["latin"] });
 const geistMono = Geist_Mono({ subsets: ["latin"] });
 
+/* -------------------------------------------------
+   1. METADATA – everything EXCEPT viewport/themeColor
+   ------------------------------------------------- */
 export const metadata: Metadata = {
   title: "Cyber Grok - Circuit Runner",
   description:
@@ -24,8 +27,11 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "Cyber Grok",
   },
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover",
-  themeColor: "#4ECDC4",
+
+  // ← REMOVE THESE TWO LINES (they go into separate exports below)
+  // viewport: { … },
+  // themeColor: "#4ECDC4",
+
   icons: {
     icon: [
       { url: "/icon-192.jpg", sizes: "192x192", type: "image/png" },
@@ -35,6 +41,25 @@ export const metadata: Metadata = {
   },
 };
 
+/* -------------------------------------------------
+   2. VIEWPORT – the new required export
+   ------------------------------------------------- */
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+};
+
+/* -------------------------------------------------
+   3. THEME COLOR – also a separate export
+   ------------------------------------------------- */
+export const themeColor = "#4ECDC4";
+
+/* -------------------------------------------------
+   4. ROOT LAYOUT – unchanged (just uses the font)
+   ------------------------------------------------- */
 export default function RootLayout({
   children,
 }: {
@@ -47,6 +72,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="manifest" href="/manifest.json" />
+        {/* No <meta name="viewport"> here – it’s handled by the export above */}
       </head>
       <body className={`${geist.className} h-full w-full bg-black antialiased`}>
         <div className="h-full w-full">{children}</div>
