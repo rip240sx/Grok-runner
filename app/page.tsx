@@ -29,9 +29,6 @@ export default function Game() {
   const wormhole = useRef<Wormhole | null>(null);
   const levelWidth = useRef(3000);
 
-  const initAudio = useCallback(() => {}, []);
-  const playSoundEffect = useCallback((type: "jump" | "coin" | "hit" | "wormhole") => {}, []);
-
   const generateLevel = useCallback((level: number) => {
     platforms.current = [];
     floorSegments.current = [];
@@ -70,14 +67,20 @@ export default function Game() {
   const retryGame = useCallback(() => { startGame(); }, [startGame]);
   const quitToMenu = useCallback(() => { setGameScreen("menu"); }, []);
 
-  // === GAME LOOP + DRAWING ===
+  // === GAME LOOP + RESIZE + DRAWING ===
   useEffect(() => {
     if (gameScreen !== "playing" || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d")!;
-    canvas.width = 800;
-    canvas.height = 600;
+    
+    // FORCE CANVAS SIZE
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
 
     let lastTime = 0;
     const gameLoop = (time: number) => {
@@ -96,38 +99,43 @@ export default function Game() {
       player.current.x += player.current.vx * delta;
       player.current.y += player.current.vy * delta;
 
-      // Simple collision with first platform
+      // Simple ground collision
       const ground = platforms.current[0];
-      if (player.current.y + player.current.h > ground.y && player.current.x + player.current.w > ground.x && player.current.x < ground.x + ground.w) {
+      if (player.current.y + player.current.h > ground.y && 
+          player.current.x + player.current.w > ground.x && 
+          player.current.x < ground.x + ground.w) {
         player.current.y = ground.y - player.current.h;
         player.current.vy = 0;
         player.current.grounded = true;
       }
 
-      // Camera follow
-      camera.current.x = player.current.x - 400;
+      // Camera
+      camera.current.x = player.current.x - canvas.width / 2;
 
-      // === DRAW ===
+      // === DRAW EVERYTHING ===
       ctx.fillStyle = "#000";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       ctx.save();
-      ctx.translate(-camera.current.x, 0);
+      ctx.translate(-camera.current.x + canvas.width / 2, 0);
 
-      // Draw platforms
-      ctx.fillStyle = "#333";
+      // Platforms
+      ctx.fillStyle = "#222";
       platforms.current.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
 
-      // Draw player
-      ctx.fillStyle = player.current.invincible && Math.floor(Date.now() / 100) % 2 ? "#aaa" : "#4ECDC4";
+      // Player
+      ctx.fillStyle = "#4ECDC4";
       ctx.fillRect(player.current.x, player.current.y, player.current.w, player.current.h);
 
-      // Draw wormhole
+      // Wormhole
       if (wormhole.current) {
-        ctx.fillStyle = "#00ff00";
+        ctx.fillStyle = "#0f0";
         ctx.beginPath();
-        ctx.arc(wormhole.current.x + 40, wormhole.current.y + 40, 30 + Math.sin(Date.now() * 0.01) * 5, 0, Math.PI * 2);
+        ctx.arc(wormhole.current.x + 40, wormhole.current.y + 40, 35, 0, Math.PI * 2);
         ctx.fill();
+        ctx.strokeStyle = "#0f0";
+        ctx.lineWidth = 3;
+        ctx.stroke();
       }
 
       ctx.restore();
@@ -136,6 +144,8 @@ export default function Game() {
     };
 
     requestAnimationFrame(gameLoop);
+
+    return () => window.removeEventListener("resize", resizeCanvas);
   }, [gameScreen]);
 
   if (gameScreen === "menu") return <MenuScreen onStart={startGame} onHowToPlay={() => setGameScreen("howToPlay")} />;
@@ -144,8 +154,19 @@ export default function Game() {
 
   return (
     <MobileLandscapeGuard startButtonLabel="Play">
-      <div className="full-viewport" style={{ position: "relative" }}>
-        <canvas ref={canvasRef} className="game-canvas" style={{ display: "block", background: "#000" }} />
+      <div className="full-viewport" style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden" }}>
+        <canvas 
+          ref={canvasRef} 
+          style={{ 
+            display: "block", 
+            width: "100%", 
+            height: "100%", 
+            background: "#000",
+            position: "absolute",
+            top: 0,
+            left: 0
+          }} 
+        />
         <Joystick onMove={(v) => { joyRef.current = v; }} />
         <JumpButton onJump={requestJump} />
       </div>
@@ -153,7 +174,7 @@ export default function Game() {
   );
 }
 
-// === SCREENS (unchanged) ===
+// === SCREENS ===
 function MenuScreen({ onStart, onHowToPlay }: { onStart: () => void; onHowToPlay: () => void }) {
   return (
     <div style={{ width: "100vw", height: "100vh", background: "linear-gradient(135deg, #0a1a1a 0%, #1a3a2a 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 40 }}>
@@ -184,4 +205,4 @@ function GameOverScreen({ score, level, onRetry, onQuit }: { score: number; leve
       <button onClick={onQuit} style={{ padding: "18px 45px", fontSize: 24, background: "transparent", color: "#FF3366", border: "3px solid #FF3366", borderRadius: 15 }}>QUIT</button>
     </div>
   );
-}
+        }
