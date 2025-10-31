@@ -418,6 +418,39 @@ export default function Game() {
     }
   }, [])
 
+
+  // === FULLSCREEN --vh + RESIZE ===
+  useEffect(() => {
+    const setVh = () => {
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    };
+    setVh();
+
+    const handleResize = () => {
+      setVh();
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = window.innerWidth * dpr;
+        canvas.height = window.innerHeight * dpr;
+        canvas.style.width = '100vw';
+        canvas.style.height = '100vh';
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
+
+
+  // === SCREEN ORIENTATION LOCK ===
+  useEffect(() => {
+
   useEffect(() => {
     if (typeof window !== "undefined" && "screen" in window && "orientation" in window.screen) {
       const screenOrientation = window.screen.orientation as any
