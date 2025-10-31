@@ -1,11 +1,11 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
-import "./globals.css"
+// app/layout.tsx
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import "./globals.css";
 
-const _geist = Geist({ subsets: ["latin"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
+const geist = Geist({ subsets: ["latin"] });
+const geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Cyber Grok - Circuit Runner",
@@ -17,22 +17,14 @@ export const metadata: Metadata = {
   authors: [{ name: "David Gutierrez" }],
   creator: "David Gutierrez",
   publisher: "David Gutierrez",
-  formatDetection: {
-    telephone: false,
-  },
+  formatDetection: { telephone: false },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Cyber Grok",
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-    viewportFit: "cover",
-  },
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover",
   themeColor: "#4ECDC4",
   icons: {
     icon: [
@@ -41,28 +33,25 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/icon-192.jpg", sizes: "192x192", type: "image/png" }],
   },
-}
+};
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" className="h-full w-full">
-  <head>
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-  </head>
-  <body className="h-full w-full bg-black font-sans antialiased">
-    <div className="h-full w-full game-container">
-      {children}
-    </div>
-    <Analytics />
-  </body>
-</html>
-  )
+      <head>
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <link rel="manifest" href="/manifest.json" />
+      </head>
+      <body className={`${geist.className} h-full w-full bg-black antialiased`}>
+        <div className="h-full w-full">{children}</div>
+        <Analytics />
+      </body>
+    </html>
+  );
 }
