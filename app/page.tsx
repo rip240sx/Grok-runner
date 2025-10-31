@@ -1189,7 +1189,7 @@ export default function Game() {
       top: 0,
       left: 0,
       width: "100vw",
-      height: "100vh",
+      height: "calc(var(--vh) * 100)",
       overflow: "hidden",
       background: "#0b1114",
       touchAction: "none",
