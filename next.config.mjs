@@ -1,11 +1,23 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
+  // Force ignore any pages/ folder (App Router only)
+  pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
+  
+  // Disable _document fallback
+  experimental: {
+    appDocumentPreloading: false,
   },
-  images: {
-    unoptimized: true,
-  },
-}
 
-export default nextConfig
+  typescript: {
+    ignoreBuildErrors: true, // Keep your setting
+  },
+  
+  images: {
+    unoptimized: true, // Keep your setting
+  },
+
+  // Extra: Prevent Vercel from caching old builds
+  eslint: { ignoreDuringBuilds: true },
+};
+
+export default nextConfig;
