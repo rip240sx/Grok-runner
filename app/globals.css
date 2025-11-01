@@ -10,3 +10,13 @@ html, body, #__next {
   user-select: none !important;
   background: red !important;
 }
+
+/* FULLSCREEN WRAPPER */
+.full-viewport {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
