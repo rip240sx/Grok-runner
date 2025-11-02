@@ -6,3 +6,41 @@ html, body, #__next, .full-viewport {
   height: 100%;
   overflow: hidden;
 }
+
+/* FULLSCREEN CANVAS */
+.game-canvas {
+  width: 100vw !important;
+  height: 100vh !important;
+  object-fit: contain !important;
+  display: block !important;
+  touch-action: none !important;
+  user-select: none !important;
+}
+
+/* LANDSCAPE OVERLAY */
+.orientation-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.85);
+  color: #fff;
+  z-index: 9999;
+  flex-direction: column;
+  padding: 24px;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.hide-when-overlay {
+  filter: blur(0.2rem);
+  pointer-events: none;
+}
+
+/* JOYSTICK + BUTTONS */
+.joystick, .jump-button {
+  position: fixed;
+  bottom: 20px;
+  z-index: 10;
+}
