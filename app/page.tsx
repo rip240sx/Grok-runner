@@ -2,8 +2,8 @@
 "use client";
 
 import { useRef, useEffect, useCallback, useState } from "react";
-import Joystick, { JumpButton } from "@/components/Joystick";
 
+// === INTERFACES ===
 interface Platform { x: number; y: number; w: number; h: number; }
 interface FloorSegment { x: number; w: number; }
 interface Enemy { x: number; y: number; w: number; h: number; vx: number; alive: boolean; animFrame: number; }
@@ -12,6 +12,7 @@ interface Wormhole { x: number; y: number; w: number; h: number; animFrame: numb
 interface GameState { level: number; score: number; lives: number; gameOver: boolean; levelComplete: boolean; transitioning: boolean; }
 type GameScreen = "menu" | "howToPlay" | "playing" | "gameOver";
 
+// === MENU SCREEN ===
 function MenuScreen({ onStart, onHowToPlay }: { onStart: () => void; onHowToPlay: () => void }) {
   return (
     <div style={{
@@ -113,22 +114,22 @@ export default function Game() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const joyRef = useRef({ x: 0, y: 0 });
-  the jumpRef = useRef(false);
+  const jumpRef = useRef(false);
   const [gameScreen, setGameScreen] = useState<GameScreen>("menu");
   const [isLandscape, setIsLandscape] = useState(true);
 
   const camera = useRef({ x: 0, y: 0 });
   const player = useRef({ x: 100, y: 200, vx: 0, vy: 0, w: 40, h: 60, grounded: false, facingRight: true, walkFrame: 0, walkTimer: 0, invincible: false, invincibleTimer: 0 });
-  the gameState = useRef<GameState>({ level: 1, score: 0, lives: 3, gameOver: false, levelComplete: false, transitioning: false });
-  the platforms = useRef<Platform[]>([]);
-  the floorSegments = useRef<FloorSegment[]>([]);
-  the enemies = useRef<Enemy[]>([]);
-  the coins = useRef<Coin[]>([]);
-  the wormhole = useRef<Wormhole | null>(null);
-  the levelWidth = useRef(3000);
-  the audioContext = useRef<AudioContext | null>(null);
-  the musicGain = useRef<GainNode | null>(null);
-  the sfxGain = useRef<GainNode | null>(null);
+  const gameState = useRef<GameState>({ level: 1, score: 0, lives: 3, gameOver: false, levelComplete: false, transitioning: false });
+  const platforms = useRef<Platform[]>([]);
+  const floorSegments = useRef<FloorSegment[]>([]);
+  const enemies = useRef<Enemy[]>([]);
+  const coins = useRef<Coin[]>([]);
+  const wormhole = useRef<Wormhole | null>(null);
+  const levelWidth = useRef(3000);
+  const audioContext = useRef<AudioContext | null>(null);
+  const musicGain = useRef<GainNode | null>(null);
+  const sfxGain = useRef<GainNode | null>(null);
 
   const initAudio = useCallback(() => {
     if (audioContext.current) return;
@@ -323,28 +324,6 @@ export default function Game() {
       const walkCycle = Math.sin(p.walkFrame * Math.PI);
       const bounceOffset = p.grounded && isMoving ? Math.abs(Math.sin(p.walkFrame * Math.PI)) * 3 : 0;
 
-      // Left leg
-      ctx.save();
-      ctx.translate(-8, p.h / 2 - 25 + bounceOffset);
-      ctx.rotate(leftLegAngle);
-      ctx.fillStyle = "#4ECDC4"; ctx.strokeStyle = "#2A9D8F"; ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.roundRect(-6, 0, 12, 20, 3); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = "#3AAAA0"; ctx.beginPath(); ctx.arc(0, 20, 4.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      ctx.save(); ctx.translate(0, 20); ctx.rotate(walkCycle * 0.2); ctx.fillStyle = "#4ECDC4"; ctx.beginPath(); ctx.roundRect(-5, 0, 10, 18, 3); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = "#2A9D8F"; ctx.beginPath(); ctx.ellipse(0, 18, 8, 5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      ctx.restore(); ctx.restore();
-
-      // Right leg
-      ctx.save();
-      ctx.translate(8, p.h / 2 - 25 + bounceOffset);
-      ctx.rotate(rightLegAngle);
-      ctx.fillStyle = "#4ECDC4"; ctx.strokeStyle = "#2A9D8F"; ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.roundRect(-6, 0, 12, 20, 3); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = "#3AAAA0"; ctx.beginPath(); ctx.arc(0, 20, 4.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      ctx.save(); ctx.translate(0, 20); ctx.rotate(-walkCycle * 0.2); ctx.fillStyle = "#4ECDC4"; ctx.beginPath(); ctx.roundRect(-5, 0, 10, 18, 3); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = "#2A9D8F"; ctx.beginPath(); ctx.ellipse(0, 18, 8, 5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      ctx.restore(); ctx.restore();
-
       if (grokImg.complete && grokImg.naturalWidth) {
         ctx.drawImage(grokImg, -p.w / 2, -p.h / 2 + bounceOffset, p.w, p.h);
       } else {
@@ -366,8 +345,8 @@ export default function Game() {
       if (!gs.gameOver && !gs.transitioning) {
         const inputX = joyRef.current.x;
         if (Math.abs(inputX) > 0.1) {
-          const targetVx = inputX * 300;
-          p.vx += (targetVx - p.vx) * 20 * dt;
+          const targetVx = inputX * maxSpeed;
+          p.vx += (targetVx - p.vx) * acceleration * dt;
           p.facingRight = inputX > 0;
           p.walkTimer += dt;
           if (p.walkTimer > 0.12) { p.walkFrame = (p.walkFrame + 1) % 8; p.walkTimer = 0; }
@@ -378,7 +357,7 @@ export default function Game() {
         }
 
         if (jumpRef.current && p.grounded) { p.vy = -550; p.grounded = false; jumpRef.current = false; }
-        p.vy += 1200 * dt; p.x += p.vx * dt; p.y += p.vy * dt;
+        p.vy += gravity * dt; p.x += p.vx * dt; p.y += p.vy * dt;
 
         p.grounded = false;
         for (const segment of floorSegments.current) {
@@ -386,7 +365,6 @@ export default function Game() {
             p.y = groundY - p.h / 2; p.vy = 0; p.grounded = true; break;
           }
         }
-
         for (const plat of platforms.current) {
           if (p.x + p.w / 2 > plat.x && p.x - p.w / 2 < plat.x + plat.w && p.y + p.h / 2 > plat.y && p.y + p.h / 2 < plat.y + plat.h + 10 && p.vy > 0) {
             p.y = plat.y - p.h / 2; p.vy = 0; p.grounded = true;
@@ -499,6 +477,7 @@ export default function Game() {
       drawCharacter(ctx, p, animTimer, grokImg);
       ctx.restore();
 
+      // HUD
       ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(10, 10, 250, 80);
       ctx.fillStyle = "#FFF"; ctx.font = "bold 20px Arial";
       ctx.fillText(`Level: ${gs.level}`, 20, 35);
@@ -517,13 +496,17 @@ export default function Game() {
     return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", resize); };
   }, [gameScreen, generateLevel, playSoundEffect, initAudio]);
 
+  if (gameScreen === "menu") return <MenuScreen onStart={startGame} onHowToPlay={() => setGameScreen("howToPlay")} />;
+  if (gameScreen === "howToPlay") return <HowToPlayScreen onBack={() => setGameScreen("menu")} />;
+  if (gameScreen === "gameOver") return <GameOverScreen score={gameState.current.score} level={gameState.current.level} onRetry={startGame} onQuit={() => setGameScreen("menu")} />;
+
   return (
     <div ref={containerRef} style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "calc(var(--vh) * 100)", overflow: "hidden", background: "#0b1114", touchAction: "none" }}>
       {!isLandscape && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.95)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontWeight: "bold", zIndex: 30 }}>Rotate Device</div>}
       <canvas ref={canvasRef} style={{ display: "block", width: "100vw", height: "100vh", position: "fixed", top: 0, left: 0 }} />
       <Joystick onMove={(v) => { joyRef.current = v; initAudio(); }} />
-      <JumpButton onJump={requestJump} />
+      <JumpButton onClick={requestJump} />
       <div style={{ position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)", color: "#666", fontSize: 12 }}>Created by David Gutierrez</div>
     </div>
   );
-        }
+                  }
