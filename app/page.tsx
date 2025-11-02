@@ -10,34 +10,7 @@ interface Enemy { x: number; y: number; w: number; h: number; vx: number; alive:
 interface Coin { x: number; y: number; w: number; h: number; collected: boolean; animFrame: number; }
 interface Wormhole { x: number; y: number; w: number; h: number; animFrame: number; }
 interface GameState { level: number; score: number; lives: number; gameOver: boolean; levelComplete: boolean; transitioning: boolean; }
-type GameScreen = "menu" | "howToPlay" | "playing" | "gameOver";
-
-function MenuScreen({ onStart, onHowToPlay }: { onStart: () => void; onHowToPlay: () => void }) {
-  return (
-    <div style={{
-      width: "100vw", height: "100vh", background: "linear-gradient(135deg, #0a1a1a 0%, #1a3a2a 100%)",
-      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 40, padding: 20
-    }}>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-        <h1 style={{ fontSize: 64, fontWeight: "bold", color: "#4ECDC4", textShadow: "0 0 20px rgba(78, 205, 196, 0.5)", margin: 0 }}>CYBER GROK</h1>
-        <p style={{ fontSize: 24, color: "#FFD700", margin: 0 }}>Circuit Runner Adventure</p>
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        <button onClick={onStart} style={{
-          padding: "20px 60px", fontSize: 28, fontWeight: "bold", color: "#0a1a1a",
-          background: "linear-gradient(135deg, #4ECDC4 0%, #2A9D8F 100%)", border: "none", borderRadius: 15,
-          cursor: "pointer", boxShadow: "0 8px 20px rgba(78, 205, 196, 0.4)"
-        }}>START GAME</button>
-        <button onClick={onHowToPlay} style={{
-          padding: "15px 50px", fontSize: 22, fontWeight: "bold", color: "#4ECDC4",
-          background: "rgba(78, 205, 196, 0.1)", border: "3px solid #4ECDC4", borderRadius: 15,
-          cursor: "pointer"
-        }}>HOW TO PLAY</button>
-      </div>
-      <div style={{ position: "absolute", bottom: 20, color: "rgba(255,255,255,0.5)", fontSize: 14 }}>Created by David Gutierrez</div>
-    </div>
-  );
-}
+type GameScreen = "menu" | "playing" | "gameOver";
 
 export default function Game() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -48,7 +21,7 @@ export default function Game() {
   const [isLandscape, setIsLandscape] = useState(true);
 
   const camera = useRef({ x: 0, y: 0 });
-  const player = useRef({ x: 100, y: 200, vx: 0, vy: 0, w: 40, h: 60, grounded: false, facingRight: true, walkFrame: 0, walkTimer: 0, invincible: false, invincibleTimer: 0 });
+  const player = useRef({ x: 100, y: 200, vx: 0, vy: 0, w: 50, h: 70, grounded: false, facingRight: true, walkFrame: 0, walkTimer: 0, invincible: false, invincibleTimer: 0 });
   const gameState = useRef<GameState>({ level: 1, score: 0, lives: 3, gameOver: false, levelComplete: false, transitioning: false });
   const platforms = useRef<Platform[]>([]);
   const floorSegments = useRef<FloorSegment[]>([]);
@@ -57,37 +30,37 @@ export default function Game() {
   const wormhole = useRef<Wormhole | null>(null);
   const levelWidth = useRef(3000);
   const audioContext = useRef<AudioContext | null>(null);
-  const musicGain = useRef<GainNode | null>(null);
+  const musicSource = useRef<OscillatorNode | null>(null);
   const sfxGain = useRef<GainNode | null>(null);
 
   const initAudio = useCallback(() => {
     if (audioContext.current) return;
     audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-    musicGain.current = audioContext.current.createGain();
     sfxGain.current = audioContext.current.createGain();
-    musicGain.current.connect(audioContext.current.destination);
     sfxGain.current.connect(audioContext.current.destination);
-    musicGain.current.gain.value = 0.3;
     sfxGain.current.gain.value = 0.5;
-    playBackgroundMusic();
+    startBackgroundMusic();
   }, []);
 
-  const playBackgroundMusic = useCallback(() => {
-    if (!audioContext.current || !musicGain.current) return;
+  const startBackgroundMusic = useCallback(() => {
+    if (!audioContext.current || musicSource.current) return;
     const ctx = audioContext.current;
-    const bass = ctx.createOscillator(); bass.type = "sine"; bass.frequency.value = 55;
-    const bassGain = ctx.createGain(); bassGain.gain.value = 0.15;
-    bass.connect(bassGain); bassGain.connect(musicGain.current!); bass.start();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = 110;
+    gain.gain.value = 0.08;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    musicSource.current = osc;
+  }, []);
 
-    const pad = ctx.createOscillator(); pad.type = "sawtooth";
-    const padFilter = ctx.createBiquadFilter(); padFilter.type = "lowpass"; padFilter.frequency.value = 800;
-    const padGain = ctx.createGain(); padGain.gain.value = 0.08;
-    pad.connect(padFilter); padFilter.connect(padGain); padGain.connect(musicGain.current!); pad.start();
-
-    const lead = ctx.createOscillator(); lead.type = "triangle";
-    const leadFilter = ctx.createBiquadFilter(); leadFilter.type = "lowpass"; leadFilter.frequency.value = 1200;
-    const leadGain = ctx.createGain(); leadGain.gain.value = 0.12;
-    lead.connect(leadFilter); leadFilter.connect(leadGain); leadGain.connect(musicGain.current!); lead.start();
+  const stopBackgroundMusic = useCallback(() => {
+    if (musicSource.current) {
+      musicSource.current.stop();
+      musicSource.current = null;
+    }
   }, []);
 
   const playSoundEffect = useCallback((type: "jump" | "coin" | "hit" | "wormhole") => {
@@ -95,27 +68,37 @@ export default function Game() {
     const ctx = audioContext.current;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(sfxGain.current);
+    osc.connect(gain);
+    gain.connect(sfxGain.current);
 
     switch (type) {
       case "jump":
-        osc.frequency.value = 400; osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.1);
-        gain.gain.setValueAtTime(0.3, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+        osc.frequency.value = 400;
+        osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
         break;
       case "coin":
-        osc.frequency.value = 800; osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.05);
-        gain.gain.setValueAtTime(0.4, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+        osc.frequency.value = 1000;
+        gain.gain.setValueAtTime(0.4, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
         break;
       case "hit":
-        osc.type = "sawtooth"; osc.frequency.value = 200; osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.2);
-        gain.gain.setValueAtTime(0.5, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+        osc.type = "square";
+        osc.frequency.value = 150;
+        gain.gain.setValueAtTime(0.4, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
         break;
       case "wormhole":
-        osc.type = "sine"; osc.frequency.value = 400; osc.frequency.exponentialRampToValueAtTime(1000, ctx.currentTime + 0.3);
-        gain.gain.setValueAtTime(0.4, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+        osc.type = "sine";
+        osc.frequency.value = 300;
+        osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.4);
+        gain.gain.setValueAtTime(0.5, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
         break;
     }
-    osc.start(); osc.stop(ctx.currentTime + 0.3);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.4);
   }, []);
 
   const generateLevel = useCallback((level: number) => {
@@ -124,57 +107,52 @@ export default function Game() {
     levelWidth.current = 3000 + level * 1000;
     platforms.current = []; floorSegments.current = []; enemies.current = []; coins.current = [];
 
-    let currentX = 0;
-    while (currentX < levelWidth.current) {
-      const segmentWidth = 200 + Math.random() * 300;
-      const hasGap = Math.random() > 0.3 && currentX > 100;
-      if (!hasGap || currentX < 100) floorSegments.current.push({ x: currentX, w: segmentWidth });
-      else {
-        const gapWidth = 80 + Math.random() * 120 + level * 10;
-        currentX += gapWidth;
-        if (Math.random() > 0.5) platforms.current.push({ x: currentX - gapWidth / 2 - 50, y: groundY - 80 - Math.random() * 60, w: 100, h: 20 });
-      }
-      currentX += segmentWidth;
-    }
-
-    let platformX = 300;
-    while (platformX < levelWidth.current - 500) {
-      const formationType = Math.random();
-      if (formationType < 0.3) {
-        for (let i = 0; i < 4; i++) platforms.current.push({ x: platformX + i * 80, y: groundY - 60 - i * 50, w: 80, h: 20 });
-        platformX += 400;
-      } else if (formationType < 0.6) {
-        const height = groundY - 150 - Math.random() * 100;
-        for (let i = 0; i < 3; i++) platforms.current.push({ x: platformX + i * 120, y: height, w: 80, h: 20 });
-        platformX += 450;
+    let x = 0;
+    while (x < levelWidth.current) {
+      const w = 200 + Math.random() * 300;
+      if (Math.random() > 0.3 && x > 200) {
+        x += 100 + Math.random() * 150;
       } else {
-        platforms.current.push({ x: platformX, y: groundY - 180 - Math.random() * 80, w: 120, h: 20 });
-        platformX += 250;
+        floorSegments.current.push({ x, w });
+        x += w;
       }
     }
 
-    const coinCount = 15 + level * 5;
-    for (let i = 0; i < coinCount / 2; i++) {
-      const platform = platforms.current[Math.floor(Math.random() * platforms.current.length)];
-      if (platform) coins.current.push({ x: platform.x + platform.w / 2, y: platform.y - 40, w: 25, h: 25, collected: false, animFrame: 0 });
-    }
-    for (let i = 0; i < coinCount / 2; i++) {
-      coins.current.push({ x: 200 + Math.random() * (levelWidth.current - 400), y: groundY - 100 - Math.random() * 150, w: 25, h: 25, collected: false, animFrame: 0 });
-    }
-
-    const enemyCount = 3 + level * 2;
-    for (let i = 0; i < enemyCount; i++) {
-      if (Math.random() > 0.5 && platforms.current.length > 0) {
-        const platform = platforms.current[Math.floor(Math.random() * platforms.current.length)];
-        enemies.current.push({ x: platform.x + platform.w / 2, y: platform.y - 40, w: 35, h: 35, vx: 60 + level * 15, alive: true, animFrame: 0 });
-      } else {
-        const segment = floorSegments.current[Math.floor(Math.random() * floorSegments.current.length)];
-        if (segment) enemies.current.push({ x: segment.x + Math.random() * segment.w, y: groundY - 40, w: 35, h: 35, vx: 60 + level * 15, alive: true, animFrame: 0 });
-      }
+    for (let i = 0; i < 8 + level * 2; i++) {
+      platforms.current.push({
+        x: 400 + i * 350,
+        y: groundY - 100 - Math.random() * 150,
+        w: 120,
+        h: 20
+      });
     }
 
-    wormhole.current = { x: levelWidth.current - 200, y: groundY - 100, w: 60, h: 80, animFrame: 0 };
-    player.current.x = 100; player.current.y = groundY - 100; player.current.vx = 0; player.current.vy = 0; player.current.grounded = false; camera.current.x = 0;
+    for (let i = 0; i < 20 + level * 5; i++) {
+      coins.current.push({
+        x: 200 + i * 140,
+        y: groundY - 100 - Math.random() * 200,
+        w: 30,
+        h: 30,
+        collected: false,
+        animFrame: 0
+      });
+    }
+
+    for (let i = 0; i < 4 + level; i++) {
+      enemies.current.push({
+        x: 600 + i * 500,
+        y: groundY - 50,
+        w: 40,
+        h: 40,
+        vx: 80 + level * 20,
+        alive: true,
+        animFrame: 0
+      });
+    }
+
+    wormhole.current = { x: levelWidth.current - 200, y: groundY - 120, w: 80, h: 100, animFrame: 0 };
+    player.current.x = 100; player.current.y = groundY - 100; player.current.vx = 0; player.current.vy = 0;
+    camera.current.x = 0;
   }, []);
 
   const startGame = useCallback(() => {
@@ -184,174 +162,185 @@ export default function Game() {
     setGameScreen("playing");
   }, [initAudio, generateLevel]);
 
+  // === FULLSCREEN + ORIENTATION FIX ===
   useEffect(() => {
-    const checkOrientation = () => setIsLandscape(window.innerWidth > window.innerHeight);
-    checkOrientation();
-    window.addEventListener("resize", checkOrientation);
-    window.addEventListener("orientationchange", checkOrientation);
-    return () => { window.removeEventListener("resize", checkOrientation); window.removeEventListener("orientationchange", checkOrientation); };
-  }, []);
-
-  useEffect(() => {
-    const setVh = () => document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
-    setVh();
-    window.addEventListener('resize', setVh);
-    return () => window.removeEventListener('resize', setVh);
+    const updateSize = () => {
+      const isLand = window.innerWidth > window.innerHeight;
+      setIsLandscape(isLand);
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+      if (canvasRef.current) {
+        const dpr = window.devicePixelRatio || 1;
+        canvasRef.current.width = window.innerWidth * dpr;
+        canvasRef.current.height = window.innerHeight * dpr;
+        canvasRef.current.style.width = '100vw';
+        canvasRef.current.style.height = '100vh';
+      }
+    };
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    window.addEventListener('orientationchange', updateSize);
+    return () => {
+      window.removeEventListener('resize', updateSize);
+      window.removeEventListener('orientationchange', updateSize);
+    };
   }, []);
 
   const requestJump = useCallback(() => {
     initAudio();
-    if (player.current.grounded && !gameState.current.gameOver) {
+    if (player.current.grounded) {
       jumpRef.current = true;
       playSoundEffect("jump");
       setTimeout(() => jumpRef.current = false, 100);
     }
   }, [initAudio, playSoundEffect]);
 
+  // === GAME LOOP ===
   useEffect(() => {
     if (gameScreen !== "playing" || !canvasRef.current) return;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d")!;
-    const grokImg = new Image(); grokImg.crossOrigin = "anonymous"; grokImg.src = "/grok-cute.png";
-
-    const resize = () => {
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      canvas.style.width = '100vw';
-      canvas.style.height = '100vh';
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
-    resize();
-    window.addEventListener("resize", resize);
+    const grokImg = new Image(); grokImg.src = "/grok-cute.png";
 
     let last = performance.now();
     let raf: number;
-    let animTimer = 0;
-
-    const drawCharacter = (ctx: CanvasRenderingContext2D, p: typeof player.current, animTimer: number) => {
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      if (!p.facingRight) ctx.scale(-1, 1);
-      if (p.invincible && Math.floor(animTimer * 10) % 2 === 0) ctx.globalAlpha = 0.5;
-
-      const isMoving = Math.abs(p.vx) > 10;
-      const walkCycle = Math.sin(p.walkFrame * Math.PI);
-      const bounceOffset = p.grounded && isMoving ? Math.abs(Math.sin(p.walkFrame * Math.PI)) * 3 : 0;
-
-      if (grokImg.complete && grokImg.naturalWidth) {
-        ctx.drawImage(grokImg, -p.w / 2, -p.h / 2 + bounceOffset, p.w, p.h);
-      } else {
-        ctx.fillStyle = "#4ECDC4";
-        ctx.fillRect(-20, -30 + bounceOffset, 40, 60);
-      }
-      ctx.restore();
-    };
 
     const loop = (now: number) => {
-      const dt = Math.min((now - last) / 1000, 1 / 30); last = now; animTimer += dt;
+      const dt = Math.min((now - last) / 1000, 0.1); last = now;
       const p = player.current; const gs = gameState.current;
       const canvasW = canvas.width / (window.devicePixelRatio || 1);
       const canvasH = canvas.height / (window.devicePixelRatio || 1);
       const groundY = canvasH - 100;
 
-      if (!gs.gameOver && !gs.transitioning) {
-        const inputX = joyRef.current.x;
-        if (Math.abs(inputX) > 0.1) { p.vx += (inputX * 300 - p.vx) * 20 * dt; p.facingRight = inputX > 0; p.walkTimer += dt; if (p.walkTimer > 0.12) { p.walkFrame = (p.walkFrame + 1) % 8; p.walkTimer = 0; } }
-        else { p.vx *= Math.pow(0.01, dt); if (Math.abs(p.vx) < 1) p.vx = 0; p.walkFrame = 0; }
+      // Input
+      const inputX = joyRef.current.x;
+      if (Math.abs(inputX) > 0.1) p.vx = inputX * 350;
+      else p.vx *= 0.85;
+      if (jumpRef.current && p.grounded) { p.vy = -650; p.grounded = false; }
 
-        if (jumpRef.current && p.grounded) { p.vy = -550; p.grounded = false; jumpRef.current = false; }
-        p.vy += 1200 * dt; p.x += p.vx * dt; p.y += p.vy * dt;
+      // Physics
+      p.vy += 1500 * dt; p.x += p.vx * dt; p.y += p.vy * dt;
 
-        p.grounded = false;
-        for (const seg of floorSegments.current) {
-          if (p.x > seg.x && p.x < seg.x + seg.w && p.y + 30 > groundY && p.y + 30 < groundY + 30 && p.vy > 0) {
-            p.y = groundY - 30; p.vy = 0; p.grounded = true; break;
-          }
+      // Collision
+      p.grounded = false;
+      for (const seg of floorSegments.current) {
+        if (p.x > seg.x && p.x < seg.x + seg.w && p.y + 35 > groundY && p.y + 35 < groundY + 30 && p.vy > 0) {
+          p.y = groundY - 35; p.vy = 0; p.grounded = true;
         }
-        for (const plat of platforms.current) {
-          if (p.x + 20 > plat.x && p.x - 20 < plat.x + plat.w && p.y + 30 > plat.y && p.y + 30 < plat.y + plat.h + 10 && p.vy > 0) {
-            p.y = plat.y - 30; p.vy = 0; p.grounded = true;
-          }
+      }
+      for (const plat of platforms.current) {
+        if (p.x + 25 > plat.x && p.x - 25 < plat.x + plat.w && p.y + 35 > plat.y && p.y + 35 < plat.y + plat.h + 10 && p.vy > 0) {
+          p.y = plat.y - 35; p.vy = 0; p.grounded = true;
         }
-
-        for (const enemy of enemies.current) {
-          if (!enemy.alive) continue;
-          enemy.x += enemy.vx * dt; enemy.animFrame = (enemy.animFrame + dt * 10) % 4;
-          if (enemy.x < 0 || enemy.x > levelWidth.current) enemy.vx *= -1;
-          if (Math.abs(p.x - enemy.x) < 50 && Math.abs(p.y - enemy.y) < 50) {
-            if (p.vy > 0 && p.y < enemy.y) { enemy.alive = false; p.vy = -300; gs.score += 50; playSoundEffect("hit"); }
-            else if (!p.invincible) { gs.lives--; p.invincible = true; p.invincibleTimer = 2; playSoundEffect("hit"); if (gs.lives <= 0) gs.gameOver = true; }
-          }
-        }
-
-        for (const coin of coins.current) {
-          if (!coin.collected && Math.abs(p.x - coin.x) < 40 && Math.abs(p.y - coin.y) < 40) {
-            coin.collected = true; gs.score += 10; playSoundEffect("coin");
-          }
-        }
-
-        if (wormhole.current && Math.abs(p.x - wormhole.current.x) < 60 && Math.abs(p.y - wormhole.current.y) < 80) {
-          gs.levelComplete = true; gs.transitioning = true; playSoundEffect("wormhole");
-          setTimeout(() => { gs.level++; gs.levelComplete = false; gs.transitioning = false; generateLevel(gs.level); }, 1500);
-        }
-
-        if (p.y > canvasH + 100) { gs.lives--; if (gs.lives <= 0) gs.gameOver = true; else { p.x = 100; p.y = groundY - 100; p.vx = 0; p.vy = 0; camera.current.x = 0; } }
-
-        camera.current.x += (p.x - canvasW / 3 - camera.current.x) * 5 * dt;
-        camera.current.x = Math.max(0, Math.min(camera.current.x, levelWidth.current - canvasW));
       }
 
+      // Enemies
+      for (const e of enemies.current) {
+        if (!e.alive) continue;
+        e.x += e.vx * dt;
+        if (e.x < 0 || e.x > levelWidth.current) e.vx *= -1;
+        if (Math.abs(p.x - e.x) < 50 && Math.abs(p.y - e.y) < 50) {
+          if (p.vy > 0 && p.y < e.y) { e.alive = false; p.vy = -400; gs.score += 50; playSoundEffect("hit"); }
+          else if (!p.invincible) { gs.lives--; p.invincible = true; p.invincibleTimer = 2; playSoundEffect("hit"); if (gs.lives <= 0) gs.gameOver = true; }
+        }
+      }
+
+      // Coins
+      for (const c of coins.current) {
+        if (!c.collected && Math.abs(p.x - c.x) < 50 && Math.abs(p.y - c.y) < 50) {
+          c.collected = true; gs.score += 10; playSoundEffect("coin");
+        }
+      }
+
+      // Wormhole
+      if (wormhole.current && Math.abs(p.x - wormhole.current.x) < 70 && Math.abs(p.y - wormhole.current.y) < 90) {
+        gs.levelComplete = true; playSoundEffect("wormhole");
+        setTimeout(() => {
+          gs.level++; gs.levelComplete = false; generateLevel(gs.level);
+        }, 800);
+      }
+
+      // Camera
+      camera.current.x += (p.x - canvasW / 3 - camera.current.x) * 8 * dt;
+      camera.current.x = Math.max(0, Math.min(camera.current.x, levelWidth.current - canvasW));
+
+      // Draw
       ctx.save(); ctx.translate(-camera.current.x, 0);
-      ctx.fillStyle = "#0a1a1a"; ctx.fillRect(camera.current.x, 0, canvasW, canvasH);
+      ctx.fillStyle = "#0a1a1a"; ctx.fillRect(0, 0, levelWidth.current, canvasH);
 
       ctx.fillStyle = "#1a4a3a";
-      for (const seg of floorSegments.current) ctx.fillRect(seg.x, groundY, seg.w, 30);
+      for (const seg of floorSegments.current) ctx.fillRect(seg.x, groundY, seg.w, 100);
       for (const plat of platforms.current) ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
 
       ctx.fillStyle = "#FFD700";
-      for (const coin of coins.current) if (!coin.collected) ctx.fillRect(coin.x - 12, coin.y - 12, 25, 25);
+      for (const c of coins.current) if (!c.collected) ctx.fillRect(c.x - 15, c.y - 15, 30, 30);
 
       ctx.fillStyle = "#FF3366";
-      for (const enemy of enemies.current) if (enemy.alive) ctx.fillRect(enemy.x - 17, enemy.y - 17, 35, 35);
+      for (const e of enemies.current) if (e.alive) ctx.fillRect(e.x - 20, e.y - 20, 40, 40);
 
       if (wormhole.current) {
         ctx.fillStyle = "#8A2BE2";
-        ctx.fillRect(wormhole.current.x - 30, wormhole.current.y - 40, 60, 80);
+        ctx.fillRect(wormhole.current.x - 40, wormhole.current.y - 50, 80, 100);
       }
 
-      drawCharacter(ctx, p, animTimer);
+      // Draw Grok
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      if (!p.facingRight) ctx.scale(-1, 1);
+      if (grokImg.complete) {
+        ctx.drawImage(grokImg, -35, -50, 70, 100);
+      } else {
+        ctx.fillStyle = "#4ECDC4";
+        ctx.fillRect(-35, -50, 70, 100);
+      }
       ctx.restore();
 
-      ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(10, 10, 250, 80);
-      ctx.fillStyle = "#FFF"; ctx.font = "bold 20px Arial";
+      ctx.restore();
+
+      // HUD
+      ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(10, 10, 280, 90);
+      ctx.fillStyle = "#FFF"; ctx.font = "bold 22px Arial";
       ctx.fillText(`Level: ${gs.level}`, 20, 35);
-      ctx.fillText(`Score: ${gs.score}`, 20, 60);
-      ctx.fillText(`Lives: Heart x${gs.lives}`, 20, 85);
+      ctx.fillText(`Score: ${gs.score}`, 20, 65);
+      ctx.fillText(`Lives: Heart x${gs.lives}`, 20, 95);
 
       ctx.fillStyle = "#666"; ctx.font = "12px Arial";
       ctx.fillText("Created by David Gutierrez", canvasW - 180, canvasH - 20);
 
-      if (gs.gameOver) setTimeout(() => setGameScreen("gameOver"), 2000);
+      if (gs.gameOver) setTimeout(() => setGameScreen("gameOver"), 1000);
 
       raf = requestAnimationFrame(loop);
     };
 
     raf = requestAnimationFrame(loop);
-    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", resize); };
-  }, [gameScreen, generateLevel, playSoundEffect, initAudio]);
+    return () => cancelAnimationFrame(raf);
+  }, [gameScreen, generateLevel, playSoundEffect]);
 
-  if (gameScreen === "menu") return <MenuScreen onStart={startGame} onHowToPlay={() => setGameScreen("howToPlay")} />;
-  if (gameScreen === "howToPlay") return <div style={{ width: "100vw", height: "100vh", background: "#0b1114", color: "white", display: "flex", alignItems: "center", justifyContent: "center" }}>HOW TO PLAY SCREEN (TODO)</div>;
-  if (gameScreen === "gameOver") return <div style={{ width: "100vw", height: "100vh", background: "#0b1114", color: "#FF3366", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48 }}>GAME OVER</div>;
+  // === MENU ===
+  if (gameScreen === "menu") {
+    return (
+      <div style={{ width: "100vw", height: "100vh", background: "#0a1a1a", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 30 }}>
+        <h1 style={{ fontSize: 60, color: "#4ECDC4", fontWeight: "bold" }}>GROK RUN</h1>
+        <button onClick={startGame} style={{ padding: "20px 50px", fontSize: 28, background: "#4CAF50", color: "white", border: "none", borderRadius: 15 }}>PLAY</button>
+      </div>
+    );
+  }
+
+  if (gameScreen === "gameOver") {
+    return (
+      <div style={{ width: "100vw", height: "100vh", background: "#0a1a1a", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 30 }}>
+        <h1 style={{ fontSize: 60, color: "#FF3366" }}>GAME OVER</h1>
+        <button onClick={startGame} style={{ padding: "20px 50px", fontSize: 28, background: "#4CAF50", color: "white", border: "none", borderRadius: 15 }}>RETRY</button>
+      </div>
+    );
+  }
 
   return (
-    <div ref={containerRef} style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "calc(var(--vh) * 100)", overflow: "hidden", background: "#0b1114", touchAction: "none" }}>
-      {!isLandscape && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.95)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontWeight: "bold", zIndex: 30 }}>Rotate Device</div>}
-      <canvas ref={canvasRef} style={{ display: "block", width: "100vw", height: "100vh", position: "fixed", top: 0, left: 0 }} />
+    <div ref={containerRef} className="full-viewport">
+      {!isLandscape && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.95)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: "bold", zIndex: 100 }}>Rotate Device</div>}
+      <canvas ref={canvasRef} style={{ display: "block", width: "100%", height: "100%" }} />
       <Joystick onMove={(v) => { joyRef.current = v; initAudio(); }} />
       <JumpButton onJump={requestJump} />
       <div style={{ position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)", color: "#666", fontSize: 12 }}>Created by David Gutierrez</div>
     </div>
   );
-           }
+}
