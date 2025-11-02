@@ -2,8 +2,8 @@
 "use client";
 
 import { useRef, useEffect, useCallback, useState } from "react";
+import Joystick, { JumpButton } from "@/components/Joystick";
 
-// === INTERFACES ===
 interface Platform { x: number; y: number; w: number; h: number; }
 interface FloorSegment { x: number; w: number; }
 interface Enemy { x: number; y: number; w: number; h: number; vx: number; alive: boolean; animFrame: number; }
@@ -12,7 +12,6 @@ interface Wormhole { x: number; y: number; w: number; h: number; animFrame: numb
 interface GameState { level: number; score: number; lives: number; gameOver: boolean; levelComplete: boolean; transitioning: boolean; }
 type GameScreen = "menu" | "howToPlay" | "playing" | "gameOver";
 
-// === MENU SCREEN ===
 function MenuScreen({ onStart, onHowToPlay }: { onStart: () => void; onHowToPlay: () => void }) {
   return (
     <div style={{
@@ -52,7 +51,6 @@ function HowToPlayScreen({ onBack }: { onBack: () => void }) {
             <p style={{ color: "#FFF", margin: 0, fontSize: 16 }}>Use the joystick to move left and right</p>
           </div>
         </div>
-
         <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
           <div style={{ fontSize: 40, width: 60, height: 60, background: "rgba(78, 205, 196, 0.2)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>⬆️</div>
           <div>
@@ -60,7 +58,6 @@ function HowToPlayScreen({ onBack }: { onBack: () => void }) {
             <p style={{ color: "#FFF", margin: 0, fontSize: 16 }}>Tap the jump button to leap over gaps</p>
           </div>
         </div>
-
         <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
           <div style={{ fontSize: 40, width: 60, height: 60, background: "rgba(78, 205, 196, 0.2)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>💎</div>
           <div>
@@ -68,7 +65,6 @@ function HowToPlayScreen({ onBack }: { onBack: () => void }) {
             <p style={{ color: "#FFF", margin: 0, fontSize: 16 }}>Gather golden microchips for points</p>
           </div>
         </div>
-
         <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
           <div style={{ fontSize: 40, width: 60, height: 60, background: "rgba(78, 205, 196, 0.2)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>🦠</div>
           <div>
@@ -76,7 +72,6 @@ function HowToPlayScreen({ onBack }: { onBack: () => void }) {
             <p style={{ color: "#FFF", margin: 0, fontSize: 16 }}>Jump on them or dodge the red viruses</p>
           </div>
         </div>
-
         <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
           <div style={{ fontSize: 40, width: 60, height: 60, background: "rgba(78, 205, 196, 0.2)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>🌀</div>
           <div>
@@ -118,22 +113,22 @@ export default function Game() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const joyRef = useRef({ x: 0, y: 0 });
-  const jumpRef = useRef(false);
+  the jumpRef = useRef(false);
   const [gameScreen, setGameScreen] = useState<GameScreen>("menu");
   const [isLandscape, setIsLandscape] = useState(true);
 
   const camera = useRef({ x: 0, y: 0 });
   const player = useRef({ x: 100, y: 200, vx: 0, vy: 0, w: 40, h: 60, grounded: false, facingRight: true, walkFrame: 0, walkTimer: 0, invincible: false, invincibleTimer: 0 });
-  const gameState = useRef<GameState>({ level: 1, score: 0, lives: 3, gameOver: false, levelComplete: false, transitioning: false });
-  const platforms = useRef<Platform[]>([]);
-  const floorSegments = useRef<FloorSegment[]>([]);
-  const enemies = useRef<Enemy[]>([]);
-  const coins = useRef<Coin[]>([]);
-  const wormhole = useRef<Wormhole | null>(null);
-  const levelWidth = useRef(3000);
-  const audioContext = useRef<AudioContext | null>(null);
-  const musicGain = useRef<GainNode | null>(null);
-  const sfxGain = useRef<GainNode | null>(null);
+  the gameState = useRef<GameState>({ level: 1, score: 0, lives: 3, gameOver: false, levelComplete: false, transitioning: false });
+  the platforms = useRef<Platform[]>([]);
+  the floorSegments = useRef<FloorSegment[]>([]);
+  the enemies = useRef<Enemy[]>([]);
+  the coins = useRef<Coin[]>([]);
+  the wormhole = useRef<Wormhole | null>(null);
+  the levelWidth = useRef(3000);
+  the audioContext = useRef<AudioContext | null>(null);
+  the musicGain = useRef<GainNode | null>(null);
+  the sfxGain = useRef<GainNode | null>(null);
 
   const initAudio = useCallback(() => {
     if (audioContext.current) return;
@@ -316,20 +311,48 @@ export default function Game() {
     let animTimer = 0;
 
     const drawCharacter = (ctx: CanvasRenderingContext2D, p: typeof player.current, animTimer: number, grokImg: HTMLImageElement) => {
-      const drawX = p.x; const drawY = p.y;
-      ctx.save(); ctx.translate(drawX, drawY);
+      const drawX = p.x;
+      const drawY = p.y;
+
+      ctx.save();
+      ctx.translate(drawX, drawY);
       if (!p.facingRight) ctx.scale(-1, 1);
       if (p.invincible && Math.floor(animTimer * 10) % 2 === 0) ctx.globalAlpha = 0.5;
+
       const isMoving = Math.abs(p.vx) > 10;
       const walkCycle = Math.sin(p.walkFrame * Math.PI);
       const bounceOffset = p.grounded && isMoving ? Math.abs(Math.sin(p.walkFrame * Math.PI)) * 3 : 0;
 
+      // Left leg
+      ctx.save();
+      ctx.translate(-8, p.h / 2 - 25 + bounceOffset);
+      ctx.rotate(leftLegAngle);
+      ctx.fillStyle = "#4ECDC4"; ctx.strokeStyle = "#2A9D8F"; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.roundRect(-6, 0, 12, 20, 3); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#3AAAA0"; ctx.beginPath(); ctx.arc(0, 20, 4.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.save(); ctx.translate(0, 20); ctx.rotate(walkCycle * 0.2); ctx.fillStyle = "#4ECDC4"; ctx.beginPath(); ctx.roundRect(-5, 0, 10, 18, 3); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#2A9D8F"; ctx.beginPath(); ctx.ellipse(0, 18, 8, 5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.restore(); ctx.restore();
+
+      // Right leg
+      ctx.save();
+      ctx.translate(8, p.h / 2 - 25 + bounceOffset);
+      ctx.rotate(rightLegAngle);
+      ctx.fillStyle = "#4ECDC4"; ctx.strokeStyle = "#2A9D8F"; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.roundRect(-6, 0, 12, 20, 3); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#3AAAA0"; ctx.beginPath(); ctx.arc(0, 20, 4.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.save(); ctx.translate(0, 20); ctx.rotate(-walkCycle * 0.2); ctx.fillStyle = "#4ECDC4"; ctx.beginPath(); ctx.roundRect(-5, 0, 10, 18, 3); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#2A9D8F"; ctx.beginPath(); ctx.ellipse(0, 18, 8, 5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.restore(); ctx.restore();
+
       if (grokImg.complete && grokImg.naturalWidth) {
         ctx.drawImage(grokImg, -p.w / 2, -p.h / 2 + bounceOffset, p.w, p.h);
       } else {
-        ctx.fillStyle = "#4ECDC4";
-        ctx.fillRect(-20, -30 + bounceOffset, 40, 60);
+        ctx.fillStyle = "#4ECDC4"; ctx.strokeStyle = "#2A9D8F"; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(0, bounceOffset - 12, p.w / 2 - 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.fillRect(-p.w / 2 + 8, bounceOffset + 3, p.w - 16, p.h / 2 - 8); ctx.strokeRect(-p.w / 2 + 8, bounceOffset + 3, p.w - 16, p.h / 2 - 8);
       }
+
       ctx.restore();
     };
 
@@ -342,10 +365,20 @@ export default function Game() {
 
       if (!gs.gameOver && !gs.transitioning) {
         const inputX = joyRef.current.x;
-        if (Math.abs(inputX) > 0.1) { p.vx += (inputX * 300 - p.vx) * 20 * dt; p.facingRight = inputX > 0; p.walkTimer += dt; if (p.walkTimer > 0.12) { p.walkFrame = (p.walkFrame + 1) % 8; p.walkTimer = 0; } }
-        else { p.vx *= Math.pow(0.01, dt); if (Math.abs(p.vx) < 1) p.vx = 0; p.walkFrame = 0; }
+        if (Math.abs(inputX) > 0.1) {
+          const targetVx = inputX * 300;
+          p.vx += (targetVx - p.vx) * 20 * dt;
+          p.facingRight = inputX > 0;
+          p.walkTimer += dt;
+          if (p.walkTimer > 0.12) { p.walkFrame = (p.walkFrame + 1) % 8; p.walkTimer = 0; }
+        } else {
+          p.vx *= Math.pow(0.01, dt);
+          if (Math.abs(p.vx) < 1) p.vx = 0;
+          p.walkFrame = 0;
+        }
+
         if (jumpRef.current && p.grounded) { p.vy = -550; p.grounded = false; jumpRef.current = false; }
-        p.vy += gravity * dt; p.x += p.vx * dt; p.y += p.vy * dt;
+        p.vy += 1200 * dt; p.x += p.vx * dt; p.y += p.vy * dt;
 
         p.grounded = false;
         for (const segment of floorSegments.current) {
@@ -353,6 +386,7 @@ export default function Game() {
             p.y = groundY - p.h / 2; p.vy = 0; p.grounded = true; break;
           }
         }
+
         for (const plat of platforms.current) {
           if (p.x + p.w / 2 > plat.x && p.x - p.w / 2 < plat.x + plat.w && p.y + p.h / 2 > plat.y && p.y + p.h / 2 < plat.y + plat.h + 10 && p.vy > 0) {
             p.y = plat.y - p.h / 2; p.vy = 0; p.grounded = true;
@@ -369,6 +403,8 @@ export default function Game() {
             else { gs.lives -= 1; p.invincible = true; p.invincibleTimer = 2; playSoundEffect("hit"); if (gs.lives <= 0) gs.gameOver = true; }
           }
         }
+
+        if (p.invincible) { p.invincibleTimer -= dt; if (p.invincibleTimer <= 0) p.invincible = false; }
 
         for (const coin of coins.current) {
           if (coin.collected) continue;
@@ -392,7 +428,8 @@ export default function Game() {
           else { p.x = 100; p.y = groundY - 100; p.vx = 0; p.vy = 0; camera.current.x = 0; }
         }
 
-        camera.current.x += (p.x - canvasW / 3 - camera.current.x) * 5 * dt;
+        const targetCameraX = p.x - canvasW / 3;
+        camera.current.x += (targetCameraX - camera.current.x) * 5 * dt;
         camera.current.x = Math.max(0, Math.min(camera.current.x, levelWidth.current - canvasW));
       }
 
@@ -468,7 +505,7 @@ export default function Game() {
       ctx.fillText(`Score: ${gs.score}`, 20, 60);
       ctx.fillText(`Lives: ${"❤️".repeat(gs.lives)}`, 20, 85);
 
-      ctx.fillStyle = "#666"; ctx.font = "12px monospace";
+      ctx.fillStyle = "#666"; ctx.font = "12px Arial";
       ctx.fillText("Created by David Gutierrez", canvasW - 180, canvasH - 20);
 
       if (gs.gameOver) setTimeout(() => setGameScreen("gameOver"), 2000);
@@ -486,6 +523,7 @@ export default function Game() {
       <canvas ref={canvasRef} style={{ display: "block", width: "100vw", height: "100vh", position: "fixed", top: 0, left: 0 }} />
       <Joystick onMove={(v) => { joyRef.current = v; initAudio(); }} />
       <JumpButton onJump={requestJump} />
+      <div style={{ position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)", color: "#666", fontSize: 12 }}>Created by David Gutierrez</div>
     </div>
   );
-                   }
+        }
