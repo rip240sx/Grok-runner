@@ -1,46 +1,68 @@
 /* app/globals.css */
-html, body, #__next, .full-viewport {
+html, body, #__next {
   margin: 0;
   padding: 0;
   width: 100%;
   height: 100%;
   overflow: hidden;
+  background: #0b1114;
 }
 
-/* FULLSCREEN CANVAS */
+.full-viewport {
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+}
+
 .game-canvas {
-  width: 100vw !important;
-  height: 100vh !important;
-  object-fit: contain !important;
-  display: block !important;
-  touch-action: none !important;
-  user-select: none !important;
+  width: 100vw;
+  height: 100vh;
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background: #0b1114;
 }
 
-/* LANDSCAPE OVERLAY */
 .orientation-overlay {
   position: fixed;
   inset: 0;
+  background: rgba(0,0,0,0.95);
+  color: white;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(0,0,0,0.85);
-  color: #fff;
-  z-index: 9999;
-  flex-direction: column;
-  padding: 24px;
-  gap: 12px;
-  pointer-events: auto;
+  font-size: 24px;
+  font-weight: bold;
+  z-index: 1000;
 }
 
-.hide-when-overlay {
-  filter: blur(0.2rem);
-  pointer-events: none;
-}
-
-/* JOYSTICK + BUTTONS */
 .joystick, .jump-button {
   position: fixed;
   bottom: 20px;
-  z-index: 10;
+  z-index: 100;
+}
+
+.joystick {
+  left: 20px;
+  width: 100px;
+  height: 100px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 50%;
+}
+
+.jump-button {
+  right: 20px;
+  width: 80px;
+  height: 80px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: bold;
 }
